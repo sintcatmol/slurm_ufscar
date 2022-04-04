@@ -20,7 +20,7 @@ def write_submission_script(*args):
         job_file.write(
             '#!/bin/bash\n'
             f'#SBATCH --job-name={JOB_BASENAME}\n'
-            f'#SBATCH --output={SLURM_OUTPUT_FILE}\n'
+            f'#SBATCH --output=slurm_%A.log\n'
             '#SBATCH --nodes=1\n'
             f'#SBATCH --ntasks={arguments.cores}\n'
             '#SBATCH --cpus-per-task=1\n'
