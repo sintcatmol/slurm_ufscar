@@ -61,21 +61,21 @@ def write_software_specific_settings(job_file, software, flags=None):
         SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
         # ORCA SETTINGS
         job_file.write(
-            f'export ORCA_DIR={SOFTWARE_EXEDIR}\n'
+            f'export ORCA_EXEDIR={SOFTWARE_EXEDIR}\n'
             f'export ORCA_SCRDIR={SOFTWARE_SCRDIR}\n'
-            f'mkdir $ORCA_SCRDIR'
-            'export LD_LIBRARY_PATH="$ORCA_DIR":"$LD_LIBRARY_PATH"\n'
-            'export PATH="$PATH":"$ORCA_DIR"\n'
+            f'mkdir $ORCA_SCRDIR\n'
+            'export LD_LIBRARY_PATH="$ORCA_EXEDIR":"$LD_LIBRARY_PATH"\n'
+            'export PATH="$PATH":"$ORCA_EXEDIR"\n'
             '\n'
         )
         # RUN JOB
         job_file.write(
-            '"$ORCA_DIR"/orca "$job_scratch_dir"/"$SLURM_JOB_NAME".inp > "$job_local_dir"/"$SLURM_JOB_NAME".out\n'
+            '"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$SLURM_JOB_NAME".inp > "$job_local_dir"/"$SLURM_JOB_NAME".out\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
         job_file.write(
-            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
+            'cp "$job_scratch_dir"/* "$job_local_dir"/\n'
             '\n'
         )    
     elif software == 'xtb':
