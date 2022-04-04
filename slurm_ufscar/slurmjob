@@ -12,10 +12,10 @@ parser.add_argument("-time", "-t", type=int, help='Maximum running time in hours
 parser.add_argument("-flags", nargs='+', default='', help='Flags for xtb or crest')
 arguments = parser.parse_args()
 
-SLURM_OUTPUT_FILE = 'out.out'
+SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 
 def write_submission_script(*args):
-    with open(f"{JOB_BASENAME}.sh", mode='w') as job_file:
+    with open(f"slurmjob_{JOB_BASENAME}.sh", mode='w') as job_file:
         # SLURM SETTINGS
         job_file.write(
             '#!/bin/bash\n'
