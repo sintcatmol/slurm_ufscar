@@ -2,8 +2,9 @@
 
 slurm_input_scripts=$(ls slurmjob*.sh | sort -V)
 
-for slurm_job in $slurm_input_scripts:
+for slurm_job in $slurm_input_scripts; do
     echo Submitting slurm job "$slurm_job"
     sbatch $slurm_job
     echo ""
+done
 exit
