@@ -1,0 +1,107 @@
+#!/usr/bin/python3
+
+import argparse
+import os
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-software", "-s", choices=['xtb','crest','gaussian','orca'], required=True)
+parser.add_argument("-jobs", "-j", nargs='+', required=True, help='Input file for the requested program')
+parser.add_argument("-cores", "-c", type=int, required=True, help='Number of cores')
+parser.add_argument("-mem", "-m", type=int, required=True, help='Memory in MB per core required')
+parser.add_argument("-time", "-t", type=int, help='Maximum running time in hours')
+parser.add_argument("-flags", nargs='+', default='', help='Flags for xtb or crest')
+arguments = parser.parse_args()
+
+JOB_LOCALDIR = '$PWD'
+JOB_SCRDIR = 'scratch/"$USER"/"$SLURM_JOB_ID"'
+SLURM_OUTPUT_FILE = 'out.out'
+
+def write_submission_script(*args):
+    JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
+    with open(f"{JOB_BASENAME}.sh", mode='w') as job_file:
+        # SLURM SETTINGS
+        job_file.write(
+            '#!/bin/bash\n'
+            f'#SBATCH --job-name={JOB_BASENAME}\n'
+            f'#SBATCH --output={SLURM_OUTPUT_FILE}\n'
+            '#SBATCH --nodes=1\n'
+            f'#SBATCH --ntasks={arguments.cores}\n'
+            '#SBATCH --cpus-per-task=1\n'
+            f'#SBATCH --mem-per-cpu={arguments.mem}\n'
+            '\n'
+        )
+
+        # JOB SETTINGS
+        job_file.write(
+            'job_local_dir="$PWD"\n'
+            f'job_scratch_dir={JOB_SCRDIR}\n'
+            'mkdir -p $job_scratch_dir\n'
+            f'cp $job_local_dir/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}  "$job_scratch_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
+            '\n'
+        )
+
+        # SOFTWARE SETTINGS
+        write_software_specific_settings(job_file, arguments.software, arguments.flags)
+
+        # DELETE SCRATCH DIR
+        job_file.write(
+            'function clean_job() {\n'
+            '    echo "Removing jobdir from the working directory"\n'
+            '    rm -rf "$job_scratch_dir"\n'
+            '    echo "Done"\n'
+            '}\n'
+            '\n'
+            'trap clean_job EXIT HUP INT TERM ERR\n'
+            '\n'
+        )
+
+def write_software_specific_settings(job_file, software, flags=None):
+    if software == 'orca':
+        SOFTWARE_EXEDIR = '""$HOME"/opt/orca_5_0_3_linux_x86-64_shared_openmpi411/"'
+        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        # ORCA SETTINGS
+        job_file.write(
+            f'export ORCA_DIR={SOFTWARE_EXEDIR}\n'
+            f'export ORCA_SCRDIR={SOFTWARE_SCRDIR}\n'
+            f'mkdir $ORCA_SCRDIR'
+            'export LD_LIBRARY_PATH="$ORCA_DIR":"$LD_LIBRARY_PATH"\n'
+            'export PATH="$PATH":"$ORCA_DIR"\n'
+            '\n'
+        )
+        # RUN JOB
+        job_file.write(
+            '"$ORCA_DIR"/orca "$job_scratch_dir"/"$SLURM_JOB_NAME".inp > "$job_local_dir"/"$SLURM_JOB_NAME".out\n'
+            '\n'
+        )
+        # COPY OUTPUTS FROM SCR TO LOCAL
+        job_file.write(
+            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
+            '\n'
+        )    
+    elif software == 'xtb':
+        SOFTWARE_EXEDIR = '"$HOME"/opt/xtb-6.4.1/'
+        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        # XTB SETTINGS
+        job_file.write(
+            f'export XTBHOME={SOFTWARE_EXEDIR}\n'
+            'source "$XTBHOME"/share/xtb/config_env.bash\n'
+            '\n'
+        )
+        #RUN JOB
+        job_file.write(
+            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$SLURM_JOB_NAME".xyz {" ".join(arguments.flags)+" "}&> "$job_local_dir"/xtb.output\n'
+            '\n'
+        )
+        # COPY OUTPUTS FROM SCR TO LOCAL
+        job_file.write(
+            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
+            '\n'
+        )
+    else:
+        raise NotImplementedError(f"Software {software} is not implemented yet")
+
+for job in arguments.jobs:
+    if os.path.isfile(job):
+        write_submission_script(job)
+    else:
+        raise OSError(f"Input file {job} not found")
