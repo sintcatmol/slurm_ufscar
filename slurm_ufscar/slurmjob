@@ -12,12 +12,9 @@ parser.add_argument("-time", "-t", type=int, help='Maximum running time in hours
 parser.add_argument("-flags", nargs='+', default='', help='Flags for xtb or crest')
 arguments = parser.parse_args()
 
-JOB_LOCALDIR = '$PWD'
-JOB_SCRDIR = '/scratch/"$USER"/"$SLURM_JOB_ID"'
 SLURM_OUTPUT_FILE = 'out.out'
 
 def write_submission_script(*args):
-    JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
     with open(f"{JOB_BASENAME}.sh", mode='w') as job_file:
         # SLURM SETTINGS
         job_file.write(
@@ -33,10 +30,12 @@ def write_submission_script(*args):
 
         # JOB SETTINGS
         job_file.write(
-            'job_local_dir="$PWD"\n'
+            f'job_local_dir={JOB_LOCALDIR}\n'
+            'mkdir -p $job_local_dir\n'
             f'job_scratch_dir={JOB_SCRDIR}\n'
             'mkdir -p $job_scratch_dir\n'
-            f'cp $job_local_dir/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}  "$job_scratch_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
+            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_local_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
+            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_scratch_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
             '\n'
         )
 
@@ -102,6 +101,9 @@ def write_software_specific_settings(job_file, software, flags=None):
 
 for job in arguments.jobs:
     if os.path.isfile(job):
+        JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
+        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}'
+        JOB_SCRDIR = '/scratch/"$USER"/"$SLURM_JOB_ID"'
         write_submission_script(job)
     else:
         raise OSError(f"Input file {job} not found")
