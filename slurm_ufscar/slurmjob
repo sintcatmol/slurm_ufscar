@@ -13,7 +13,7 @@ parser.add_argument("-flags", nargs='+', default='', help='Flags for xtb or cres
 arguments = parser.parse_args()
 
 JOB_LOCALDIR = '$PWD'
-JOB_SCRDIR = 'scratch/"$USER"/"$SLURM_JOB_ID"'
+JOB_SCRDIR = '/scratch/"$USER"/"$SLURM_JOB_ID"'
 SLURM_OUTPUT_FILE = 'out.out'
 
 def write_submission_script(*args):
