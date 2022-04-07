@@ -76,7 +76,28 @@ def write_software_specific_settings(job_file, software, flags=None):
         job_file.write(
             'cp "$job_scratch_dir"/* "$job_local_dir"/\n'
             '\n'
-        )    
+        )
+    elif software == 'gaussian':
+        SOFTWARE_EXEDIR = '""$HOME"/opt/gaussian_16A033/"'
+        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        # GAUSSIAN16 SETTINGS
+        job_file.write(
+            f'export GAUSS_EXEDIR={SOFTWARE_EXEDIR}\n'
+            f'export GAUSS_SCRDIR={SOFTWARE_SCRDIR}\n'
+            'export PATH="$PATH":"$GAUSS_EXEDIR"\n'
+            'mkdir $GAUSS_SCRDIR\n'
+            '\n'
+        )
+        # RUN JOB
+        job_file.write(
+            '"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$SLURM_JOB_NAME".com > "$job_local_dir"/"$SLURM_JOB_NAME".log\n'
+            '\n'
+        )
+        # COPY OUTPUTS FROM SCR TO LOCAL
+        job_file.write(
+            'cp "$job_scratch_dir"/* "$job_local_dir"/\n'
+            '\n'
+        )     
     elif software == 'xtb':
         SOFTWARE_EXEDIR = '"$HOME"/opt/xtb-6.4.1/'
         SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
