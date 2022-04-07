@@ -97,6 +97,28 @@ def write_software_specific_settings(job_file, software, flags=None):
             'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
             '\n'
         )
+    elif software == 'crest':
+        XTBHOME='"$HOME"/opt/xtb-6.4.1/'
+        SOFTWARE_EXEDIR = '"$HOME"/opt/crest-2.11.2'
+        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        # CREST SETTINGS
+        job_file.write(
+            f'export XTBHOME={XTBHOME}\n'
+            'source "$XTBHOME"/share/xtb/config_env.bash\n'
+            f'export CREST_EXEDIR={SOFTWARE_EXEDIR}'
+            '\n'
+        )
+        #RUN JOB
+        job_file.write(
+            f'cd $job_local_dir\n'
+            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$SLURM_JOB_NAME".xyz {" ".join(arguments.flags)+" "}&> "$job_local_dir"/xtb.output\n'
+            '\n'
+        )
+        # COPY OUTPUTS FROM SCR TO LOCAL
+        job_file.write(
+            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
+            '\n'
+        )
     else:
         raise NotImplementedError(f"Software {software} is not implemented yet")
 
