@@ -80,12 +80,19 @@ def write_software_specific_settings(job_file, software, flags=None):
     elif software == 'gaussian':
         SOFTWARE_EXEDIR = '""$HOME"/opt/gaussian_16A033/"'
         SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        XTBHOME='"$HOME"/opt/xtb-6.4.1/'
         # GAUSSIAN16 SETTINGS
         job_file.write(
             f'export GAUSS_EXEDIR={SOFTWARE_EXEDIR}\n'
             f'export GAUSS_SCRDIR={SOFTWARE_SCRDIR}\n'
             'export PATH="$PATH":"$GAUSS_EXEDIR"\n'
             'mkdir $GAUSS_SCRDIR\n'
+            '\n'
+        )
+        # XTB SETTINGS FOR GAUSSIAN-XTB INTERFACE
+        job_file.write(
+            f'export XTBHOME={XTBHOME}\n'
+            'source "$XTBHOME"/share/xtb/config_env.bash\n'
             '\n'
         )
         # RUN JOB
