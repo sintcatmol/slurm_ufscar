@@ -88,7 +88,7 @@ def write_software_specific_settings(job_file, software, flags=None):
         )
         #RUN JOB
         job_file.write(
-            f'cd $job_local_dir\n'
+            f'cd $job_scratch_dir\n'
             f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$SLURM_JOB_NAME".xyz {" ".join(arguments.flags)+" "}&> "$job_local_dir"/xtb.output\n'
             '\n'
         )
