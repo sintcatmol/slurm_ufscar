@@ -91,6 +91,8 @@ def write_software_specific_settings(job_file, software, flags=None):
         )
         # XTB SETTINGS FOR GAUSSIAN-XTB INTERFACE
         job_file.write(
+            f'export MKL_NUM_THREADS={arguments.cores}\n'
+            f'export OMP_NUM_THREADS={arguments.cores}\n'
             f'export XTBHOME={XTBHOME}\n'
             'source "$XTBHOME"/share/xtb/config_env.bash\n'
             '\n'
@@ -110,6 +112,8 @@ def write_software_specific_settings(job_file, software, flags=None):
         SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
         # XTB SETTINGS
         job_file.write(
+            f'export MKL_NUM_THREADS={arguments.cores}\n'
+            f'export OMP_NUM_THREADS={arguments.cores}\n'
             f'export XTBHOME={SOFTWARE_EXEDIR}\n'
             'source "$XTBHOME"/share/xtb/config_env.bash\n'
             '\n'
@@ -131,6 +135,8 @@ def write_software_specific_settings(job_file, software, flags=None):
         SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
         # CREST SETTINGS
         job_file.write(
+            f'export MKL_NUM_THREADS={arguments.cores}\n'
+            f'export OMP_NUM_THREADS={arguments.cores}\n'
             f'export XTBHOME={XTBHOME}\n'
             'source "$XTBHOME"/share/xtb/config_env.bash\n'
             f'export CREST_EXEDIR={SOFTWARE_EXEDIR}'
