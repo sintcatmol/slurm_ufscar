@@ -97,6 +97,11 @@ def write_software_specific_settings(job_file, software, flags=None):
             'source "$XTBHOME"/share/xtb/config_env.bash\n'
             '\n'
         )
+        # ADJUST GAUSSIAN CHECKPOINT OUTPUT FILE 
+        job_file.write(
+            'sed -i \"s#%chk=#%chk=$job_scratch_dir/#g\" "$job_scratch_dir"/"$SLURM_JOB_NAME".com\n' 
+            '\n'
+        )
         # RUN JOB
         job_file.write(
             '"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$SLURM_JOB_NAME".com > "$job_local_dir"/"$SLURM_JOB_NAME".log\n'
