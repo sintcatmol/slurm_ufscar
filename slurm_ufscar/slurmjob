@@ -57,12 +57,17 @@ def write_submission_script(*args):
     JOB_SCRDIR = f"{config['DEFAULT']['scratch dir']}\"$USER\"/\"{QUEUE_JOB_ID}\""
 
     job_file.write(
-        f'job_local_dir={JOB_LOCALDIR}\n'
+        f'job_input="{JOB_BASENAME}.{JOB_INPUT_EXTENSION}"\n'
+        f'job_submit_dir="{JOB_SUBMIT_DIR}"\n'
+        '\n'
+        f'job_local_dir=""$job_submit_dir"/{JOB_BASENAME}"\n'
         'mkdir -p $job_local_dir\n'
-        f'job_scratch_dir={JOB_SCRDIR}\n'
+        '\n'
+        f'job_scratch_dir="{JOB_SCRDIR}"\n'
         'mkdir -p $job_scratch_dir\n'
-        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_local_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
-        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
+        '\n'
+        f'cp "$job_submit_dir"/"$job_input" "$job_local_dir"\n'
+        f'cp "$job_submit_dir"/"$job_input" "$job_scratch_dir"\n'
         '\n'
     )
 
@@ -85,7 +90,7 @@ def write_submission_script(*args):
 def write_software_specific_settings(job_file, job_scrdir, software, flags=None):
     if software == 'orca':
         SOFTWARE_EXEDIR = f"\"{config['executables']['orca5']}\""
-        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
+        SOFTWARE_SCRDIR = f'\"{job_scrdir}/scr\"'
         # ORCA SETTINGS
         job_file.write(
             f'export ORCA_EXEDIR={SOFTWARE_EXEDIR}\n'
@@ -107,13 +112,13 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
     elif software == 'gaussian':
         SOFTWARE_EXEDIR = f"\"{config['executables']['gaussian16']}\""
-        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
+        SOFTWARE_SCRDIR = f'\""$job_scratch_dir"/scr\"'
         XTBHOME=f"\"{config['executables']['xtb']}\""
         # GAUSSIAN16 SETTINGS
         job_file.write(
             f'export GAUSS_EXEDIR={SOFTWARE_EXEDIR}\n'
-            f'export GAUSS_SCRDIR={SOFTWARE_SCRDIR}\n'
             'export PATH="$PATH":"$GAUSS_EXEDIR"\n'
+            f'export GAUSS_SCRDIR={SOFTWARE_SCRDIR}\n'
             'mkdir $GAUSS_SCRDIR\n'
             '\n'
         )
@@ -127,12 +132,12 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # ADJUST GAUSSIAN CHECKPOINT OUTPUT FILE 
         job_file.write(
-            f'sed -i \"s#%chk=#%chk=$job_scratch_dir/#g\" f"$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n' 
+            f'sed -i \"s#%chk=#%chk=$job_scratch_dir/#g\" "$job_scratch_dir"/"$job_input"\n' 
             '\n'
         )
         # RUN JOB
         job_file.write(
-            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} > f"$job_local_dir"/{JOB_BASENAME}.log\n'
+            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > f"$job_local_dir"/{JOB_BASENAME}.log\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -192,7 +197,8 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
 for job in arguments.jobs:
     if os.path.isfile(job):
         JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
-        JOB_LOCALDIR = os.path.join(os.getcwd(), JOB_BASENAME)
+        JOB_SUBMIT_DIR = os.getcwd()
+        JOB_LOCALDIR = os.path.join(JOB_SUBMIT_DIR, JOB_BASENAME)
         write_submission_script(job)
     else:
         raise OSError(f"Input file {job} not found")
