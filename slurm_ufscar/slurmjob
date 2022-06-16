@@ -55,7 +55,7 @@ def write_submission_script(*args):
             f'#PBS -o {JOB_BASENAME}.stdout\n'
             f'#PBS -e {JOB_BASENAME}.stderr\n'
             f'#PBS -l select=1:ncpus={arguments.cores}:mpiprocs=16:mem={arguments.cores*arguments.mem}mb\n'
-            f'#PBS -l walltime={walltime}'
+            f'#PBS -l walltime={walltime}\n'
             '\n'
         )
     else:
