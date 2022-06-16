@@ -192,7 +192,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
 for job in arguments.jobs:
     if os.path.isfile(job):
         JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
-        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}/'
+        JOB_LOCALDIR = os.path.join(os.getcwd(), JOB_BASENAME)
         write_submission_script(job)
     else:
         raise OSError(f"Input file {job} not found")
