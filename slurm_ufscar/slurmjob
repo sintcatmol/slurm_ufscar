@@ -127,12 +127,12 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # ADJUST GAUSSIAN CHECKPOINT OUTPUT FILE 
         job_file.write(
-            'sed -i \"s#%chk=#%chk=$job_scratch_dir/#g\" "$job_scratch_dir"/"$SLURM_JOB_NAME".com\n' 
+            f'sed -i \"s#%chk=#%chk=$job_scratch_dir/#g\" f"$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n' 
             '\n'
         )
         # RUN JOB
         job_file.write(
-            '"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$SLURM_JOB_NAME".com > "$job_local_dir"/"$SLURM_JOB_NAME".log\n'
+            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$SLURM_JOB_NAME".com > f"$job_local_dir"/{JOB_BASENAME}.log\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
