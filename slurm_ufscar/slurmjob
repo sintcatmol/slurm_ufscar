@@ -29,6 +29,7 @@ def write_submission_script(*args):
     
     # QUEUE SYSTEM SETTINGS
     if config['DEFAULT']['queue engine'] == 'slurm':
+        QUEUE_JOB_ID = "$SLURM_JOB_ID"
         job_file.write(
             '#!/bin/bash\n'
             f'#SBATCH --job-name={JOB_BASENAME}\n'
@@ -45,6 +46,8 @@ def write_submission_script(*args):
         raise NotImplementedError(f"QUEUE System {config['DEFAULT']['queue engine']} is not implemented")
 
     # JOB SETTINGS
+    JOB_SCRDIR = f"{config['DEFAULT']['scratch dir']}\"$USER\"/\"{QUEUE_JOB_ID}\""
+
     job_file.write(
         f'job_local_dir={JOB_LOCALDIR}\n'
         'mkdir -p $job_local_dir\n'
@@ -56,7 +59,7 @@ def write_submission_script(*args):
     )
 
     # SOFTWARE SETTINGS
-    write_software_specific_settings(job_file, arguments.software, arguments.flags)
+    write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=arguments.flags)
 
     # DELETE SCRATCH DIR
     job_file.write(
@@ -71,10 +74,10 @@ def write_submission_script(*args):
     )
     job_file.close()
 
-def write_software_specific_settings(job_file, software, flags=None):
+def write_software_specific_settings(job_file, job_scrdir, software, flags=None):
     if software == 'orca':
         SOFTWARE_EXEDIR = f"\"{config['executables']['orca5']}\""
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # ORCA SETTINGS
         job_file.write(
             f'export ORCA_EXEDIR={SOFTWARE_EXEDIR}\n'
@@ -96,7 +99,7 @@ def write_software_specific_settings(job_file, software, flags=None):
         )
     elif software == 'gaussian':
         SOFTWARE_EXEDIR = f"\"{config['executables']['gaussian16']}\""
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         XTBHOME=f"\"{config['executables']['xtb']}\""
         # GAUSSIAN16 SETTINGS
         job_file.write(
@@ -131,7 +134,7 @@ def write_software_specific_settings(job_file, software, flags=None):
         )     
     elif software == 'xtb':
         SOFTWARE_EXEDIR = f"\"{config['executables']['xtb']}\""
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # XTB SETTINGS
         job_file.write(
             f'export MKL_NUM_THREADS={arguments.cores}\n'
@@ -154,7 +157,7 @@ def write_software_specific_settings(job_file, software, flags=None):
     elif software == 'crest':
         XTBHOME=f"\"{config['executables']['xtb']}\""
         SOFTWARE_EXEDIR = f"\"{config['executables']['crest']}\""
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # CREST SETTINGS
         job_file.write(
             f'export MKL_NUM_THREADS={arguments.cores}\n'
@@ -181,8 +184,7 @@ def write_software_specific_settings(job_file, software, flags=None):
 for job in arguments.jobs:
     if os.path.isfile(job):
         JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
-        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}'
-        JOB_SCRDIR = f"{config['DEFAULT']['scratch dir']}\"$USER\"/\"$SLURM_JOB_ID\""
+        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}/'
         write_submission_script(job)
     else:
         raise OSError(f"Input file {job} not found")
