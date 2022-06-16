@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import configparser
+import datetime
 import argparse
 import os
 
@@ -18,9 +19,16 @@ parser.add_argument("-software", "-s", choices=['xtb','crest','gaussian','orca']
 parser.add_argument("-jobs", "-j", nargs='+', required=True, help='Input file for the requested program')
 parser.add_argument("-cores", "-c", type=int, required=True, help='Number of cores')
 parser.add_argument("-mem", "-m", type=int, required=True, help='Memory in MB per core required')
-parser.add_argument("-time", "-t", type=int, help='Maximum running time in hours')
+parser.add_argument("-time", "-t", type=float, required=True, help='Maximum running time in hours')
 parser.add_argument("-flags", nargs='+', default='', help='Flags for xtb or crest')
 arguments = parser.parse_args()
+
+duration = datetime.timedelta(hours=arguments.time)
+totsec = duration.total_seconds()
+h = totsec//3600
+m = (totsec%3600) // 60
+sec =(totsec%3600)%60 #just for reference
+walltime = f"{int(h):02d}:{int(m):02d}:{int(sec):02d}"
 
 SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 
@@ -47,6 +55,7 @@ def write_submission_script(*args):
             f'#PBS -o {JOB_BASENAME}.stdout\n'
             f'#PBS -e {JOB_BASENAME}.stderr\n'
             f'#PBS -l select=1:ncpus={arguments.cores}:mpiprocs=16:mem={arguments.cores*arguments.mem}mb\n'
+            f'#PBS -l walltime={walltime}'
             '\n'
         )
     else:
