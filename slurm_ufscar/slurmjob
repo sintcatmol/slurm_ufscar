@@ -137,7 +137,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # RUN JOB
         job_file.write(
-            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > f"$job_local_dir"/{JOB_BASENAME}.log\n'
+            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > "$job_local_dir"/{JOB_BASENAME}.log\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
