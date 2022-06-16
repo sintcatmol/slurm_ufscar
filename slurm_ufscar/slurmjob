@@ -44,7 +44,8 @@ def write_submission_script(*args):
         QUEUE_JOB_ID = "$PBS_JOBID"
         job_file.write(
             f'#PBS -N {JOB_BASENAME}\n'
-            f'#PBS -o pbs_"$PBS_JOBID"_"$PBS_JOBNAME".log\n'
+            f'#PBS -o {JOB_BASENAME}.stdout\n'
+            f'#PBS -e {JOB_BASENAME}.stderr\n'
             f'#PBS -l select=1:ncpus={arguments.cores}:mpiprocs=16:mem={arguments.cores*arguments.mem}mb\n'
             '\n'
         )
