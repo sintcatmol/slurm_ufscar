@@ -26,12 +26,12 @@ SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 
 def write_submission_script(*args):
     job_file = open(f"slurmjob_{JOB_BASENAME}.sh", mode='w')
+    job_file.write('#!/bin/bash\n')
     
     # QUEUE SYSTEM SETTINGS
     if config['DEFAULT']['queue engine'] == 'slurm':
         QUEUE_JOB_ID = "$SLURM_JOB_ID"
         job_file.write(
-            '#!/bin/bash\n'
             f'#SBATCH --job-name={JOB_BASENAME}\n'
             f'#SBATCH --output=slurm_%A_%x.log\n'
             '#SBATCH --nodes=1\n'
