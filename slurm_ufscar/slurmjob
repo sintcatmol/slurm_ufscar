@@ -1,7 +1,17 @@
 #!/usr/bin/python3
 
+import configparser
 import argparse
 import os
+
+config = configparser.ConfigParser()
+config_file = os.path.join(os.environ['HOME'], '.slurmjobrc')
+try:
+    with open(config_file) as f:
+        config.read_file(f)
+except FileNotFoundError:
+    print('Configuration file not found. Exiting now')
+    exit()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-software", "-s", choices=['xtb','crest','gaussian','orca'], required=True)
@@ -15,10 +25,13 @@ arguments = parser.parse_args()
 SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 
 def write_submission_script(*args):
-    with open(f"slurmjob_{JOB_BASENAME}.sh", mode='w') as job_file:
-        # SLURM SETTINGS
+    job_file = open(f"slurmjob_{JOB_BASENAME}.sh", mode='w')
+    job_file.write('#!/bin/bash\n')
+
+    # QUEUE SYSTEM SETTINGS
+    if config['DEFAULT']['queue engine'] == 'slurm':
+        QUEUE_JOB_ID = "$SLURM_JOB_ID"
         job_file.write(
-            '#!/bin/bash\n'
             f'#SBATCH --job-name={JOB_BASENAME}\n'
             f'#SBATCH --output=slurm_%A_%x.log\n'
             '#SBATCH --nodes=1\n'
@@ -27,37 +40,52 @@ def write_submission_script(*args):
             f'#SBATCH --mem-per-cpu={arguments.mem}\n'
             '\n'
         )
-
-        # JOB SETTINGS
+    elif config['DEFAULT']['queue engine'] == 'PBS-Pro':
+        QUEUE_JOB_ID = "$PBS_JOBID"
         job_file.write(
-            f'job_local_dir={JOB_LOCALDIR}\n'
-            'mkdir -p $job_local_dir\n'
-            f'job_scratch_dir={JOB_SCRDIR}\n'
-            'mkdir -p $job_scratch_dir\n'
-            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_local_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
-            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_scratch_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
+            f'#PBS -N {JOB_BASENAME}\n'
+            f'#PBS -o pbs_%A_%x.log\n'
+            '#PBS -l select=1\n'
+            f'#PBS -l ncpus={arguments.cores}\n'
+            f'#PBS -l mem={arguments.mem}\n'
             '\n'
         )
+    else:
+        raise NotImplementedError(f"QUEUE System {config['DEFAULT']['queue engine']} is not implemented")
 
-        # SOFTWARE SETTINGS
-        write_software_specific_settings(job_file, arguments.software, arguments.flags)
+    # JOB SETTINGS
+    JOB_SCRDIR = f"{config['DEFAULT']['scratch dir']}\"$USER\"/\"{QUEUE_JOB_ID}\""
 
-        # DELETE SCRATCH DIR
-        job_file.write(
-            'function clean_job() {\n'
-            '    echo "Removing jobdir from the working directory"\n'
-            '    rm -rf "$job_scratch_dir"\n'
-            '    echo "Done"\n'
-            '}\n'
-            '\n'
-            'trap clean_job EXIT HUP INT TERM ERR\n'
-            '\n'
-        )
+    job_file.write(
+        f'job_local_dir={JOB_LOCALDIR}\n'
+        'mkdir -p $job_local_dir\n'
+        f'job_scratch_dir={JOB_SCRDIR}\n'
+        'mkdir -p $job_scratch_dir\n'
+        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_local_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
+        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
+        '\n'
+    )
 
-def write_software_specific_settings(job_file, software, flags=None):
+    # SOFTWARE SETTINGS
+    write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=arguments.flags)
+
+    # DELETE SCRATCH DIR
+    job_file.write(
+        'function clean_job() {\n'
+        '    echo "Removing jobdir from the working directory"\n'
+        '    rm -rf "$job_scratch_dir"\n'
+        '    echo "Done"\n'
+        '}\n'
+        '\n'
+        'trap clean_job EXIT HUP INT TERM ERR\n'
+        '\n'
+    )
+    job_file.close()
+
+def write_software_specific_settings(job_file, job_scrdir, software, flags=None):
     if software == 'orca':
-        SOFTWARE_EXEDIR = '""$HOME"/opt/orca_5_0_3_linux_x86-64_shared_openmpi411/"'
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_EXEDIR = f"\"{config['executables']['orca5']}\""
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # ORCA SETTINGS
         job_file.write(
             f'export ORCA_EXEDIR={SOFTWARE_EXEDIR}\n'
@@ -78,9 +106,9 @@ def write_software_specific_settings(job_file, software, flags=None):
             '\n'
         )
     elif software == 'gaussian':
-        SOFTWARE_EXEDIR = '""$HOME"/opt/gaussian_16A033/"'
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
-        XTBHOME='"$HOME"/opt/xtb-6.4.1/'
+        SOFTWARE_EXEDIR = f"\"{config['executables']['gaussian16']}\""
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
+        XTBHOME=f"\"{config['executables']['xtb']}\""
         # GAUSSIAN16 SETTINGS
         job_file.write(
             f'export GAUSS_EXEDIR={SOFTWARE_EXEDIR}\n'
@@ -113,8 +141,8 @@ def write_software_specific_settings(job_file, software, flags=None):
             '\n'
         )     
     elif software == 'xtb':
-        SOFTWARE_EXEDIR = '"$HOME"/opt/xtb-6.4.1/'
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        SOFTWARE_EXEDIR = f"\"{config['executables']['xtb']}\""
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # XTB SETTINGS
         job_file.write(
             f'export MKL_NUM_THREADS={arguments.cores}\n'
@@ -135,9 +163,9 @@ def write_software_specific_settings(job_file, software, flags=None):
             '\n'
         )
     elif software == 'crest':
-        XTBHOME='"$HOME"/opt/xtb-6.4.1/'
-        SOFTWARE_EXEDIR = '"$HOME"/opt/crest-2.11.2'
-        SOFTWARE_SCRDIR = f"{JOB_SCRDIR}/scr"
+        XTBHOME=f"\"{config['executables']['xtb']}\""
+        SOFTWARE_EXEDIR = f"\"{config['executables']['crest']}\""
+        SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
         # CREST SETTINGS
         job_file.write(
             f'export MKL_NUM_THREADS={arguments.cores}\n'
@@ -164,8 +192,7 @@ def write_software_specific_settings(job_file, software, flags=None):
 for job in arguments.jobs:
     if os.path.isfile(job):
         JOB_BASENAME, JOB_INPUT_EXTENSION = job.split('.',1)
-        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}'
-        JOB_SCRDIR = '/scratch/"$USER"/"$SLURM_JOB_ID"'
+        JOB_LOCALDIR = f'$PWD/{JOB_BASENAME}/'
         write_submission_script(job)
     else:
         raise OSError(f"Input file {job} not found")
