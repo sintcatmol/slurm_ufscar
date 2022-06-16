@@ -98,7 +98,7 @@ def write_submission_script(*args):
 def write_software_specific_settings(job_file, job_scrdir, software, flags=None):
     if software == 'orca':
         SOFTWARE_EXEDIR = f"\"{config['executables']['orca5']}\""
-        SOFTWARE_SCRDIR = f'\"{job_scrdir}/scr\"'
+        SOFTWARE_SCRDIR = f'\""$job_scratch_dir"/scr\"'
         # ORCA SETTINGS
         job_file.write(
             f'export ORCA_EXEDIR={SOFTWARE_EXEDIR}\n'
@@ -110,7 +110,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # RUN JOB
         job_file.write(
-            '"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$SLURM_JOB_NAME".inp > "$job_local_dir"/"$SLURM_JOB_NAME".out\n'
+            f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_local_dir"/{JOB_BASENAME}.out\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -167,7 +167,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$SLURM_JOB_NAME".xyz {" ".join(arguments.flags)+" "}&> "$job_local_dir"/xtb.output\n'
+            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(arguments.flags)} &> "$job_local_dir"/xtb.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -191,7 +191,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$SLURM_JOB_NAME".xyz {" ".join(arguments.flags)+" "}&> "$job_local_dir"/crest.output\n'
+            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(arguments.flags)} &> "$job_local_dir"/crest.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
