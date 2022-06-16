@@ -27,8 +27,8 @@ SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 def write_submission_script(*args):
     job_file = open(f"slurmjob_{JOB_BASENAME}.sh", mode='w')
     
+    # QUEUE SYSTEM SETTINGS
     if config['DEFAULT']['queue engine'] == 'slurm':
-        # SLURM SETTINGS
         job_file.write(
             '#!/bin/bash\n'
             f'#SBATCH --job-name={JOB_BASENAME}\n'
@@ -39,23 +39,21 @@ def write_submission_script(*args):
             f'#SBATCH --mem-per-cpu={arguments.mem}\n'
             '\n'
         )
-
-        # JOB SETTINGS
-        job_file.write(
-            f'job_local_dir={JOB_LOCALDIR}\n'
-            'mkdir -p $job_local_dir\n'
-            f'job_scratch_dir={JOB_SCRDIR}\n'
-            'mkdir -p $job_scratch_dir\n'
-            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_local_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
-            f'cp "$PWD"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION} "$job_scratch_dir"/"$SLURM_JOB_NAME".{JOB_INPUT_EXTENSION}\n'
-            '\n'
-        )
-
     elif config['DEFAULT']['queue engine'] == 'PBS-Pro':
         pass
-
     else:
         raise NotImplementedError(f"QUEUE System {config['DEFAULT']['queue engine']} is not implemented")
+
+    # JOB SETTINGS
+    job_file.write(
+        f'job_local_dir={JOB_LOCALDIR}\n'
+        'mkdir -p $job_local_dir\n'
+        f'job_scratch_dir={JOB_SCRDIR}\n'
+        'mkdir -p $job_scratch_dir\n'
+        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_local_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
+        f'cp "$PWD"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION} "$job_scratch_dir"/{JOB_BASENAME}.{JOB_INPUT_EXTENSION}\n'
+        '\n'
+    )
 
     # SOFTWARE SETTINGS
     write_software_specific_settings(job_file, arguments.software, arguments.flags)
