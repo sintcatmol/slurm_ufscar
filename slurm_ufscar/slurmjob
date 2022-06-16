@@ -27,7 +27,7 @@ SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
 def write_submission_script(*args):
     job_file = open(f"slurmjob_{JOB_BASENAME}.sh", mode='w')
     job_file.write('#!/bin/bash\n')
-    
+
     # QUEUE SYSTEM SETTINGS
     if config['DEFAULT']['queue engine'] == 'slurm':
         QUEUE_JOB_ID = "$SLURM_JOB_ID"
@@ -41,7 +41,15 @@ def write_submission_script(*args):
             '\n'
         )
     elif config['DEFAULT']['queue engine'] == 'PBS-Pro':
-        pass
+        QUEUE_JOB_ID = "$PBS_JOBID"
+        job_file.write(
+            f'#PBS -N {JOB_BASENAME}\n'
+            f'#PBS -o pbs_%A_%x.log\n'
+            '#PBS -l select=1\n'
+            f'#PBS -l ncpus={arguments.cores}\n'
+            f'#PBS -l mem={arguments.mem}\n'
+            '\n'
+        )
     else:
         raise NotImplementedError(f"QUEUE System {config['DEFAULT']['queue engine']} is not implemented")
 
