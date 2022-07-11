@@ -17,6 +17,7 @@ except FileNotFoundError:
 parser = argparse.ArgumentParser()
 parser.add_argument("-software", "-s", choices=['xtb','crest','gaussian','orca'], required=True)
 parser.add_argument("-jobs", "-j", nargs='+', required=True, help='Input file for the requested program')
+parser.add_argument("--input", required=False, help="Custom input file. Usually employed for XTB calculations")
 parser.add_argument("-cores", "-c", type=int, required=True, help='Number of cores')
 parser.add_argument("-mem", "-m", type=int, required=True, help='Memory in MB per core required')
 parser.add_argument("-time", "-t", type=float, required=True, help='Maximum running time in hours')
@@ -80,7 +81,19 @@ def write_submission_script(*args):
     )
 
     # SOFTWARE SETTINGS
-    write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=arguments.flags)
+    JOB_FLAGS = arguments.flags
+    if arguments.input:
+        CUSTOM_INPUT = os.path.basename(arguments.input)
+        job_file.write(
+            f'# Custom input file requested\n'
+            f'cp {arguments.input} "$job_local_dir"\n'
+            f'cp {arguments.input} "$job_scratch_dir"\n'
+            '\n'
+        )
+        if isinstance(JOB_FLAGS, list):
+            JOB_FLAGS.append(f"--input {CUSTOM_INPUT}")
+    
+    write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=JOB_FLAGS)
 
     # DELETE SCRATCH DIR
     job_file.write(
@@ -167,7 +180,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(arguments.flags)} &> "$job_local_dir"/xtb.output\n'
+            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_local_dir"/xtb.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -191,7 +204,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(arguments.flags)} &> "$job_local_dir"/crest.output\n'
+            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_local_dir"/crest.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
