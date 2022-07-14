@@ -81,18 +81,13 @@ def write_submission_script(*args):
     )
 
     # SOFTWARE SETTINGS
-    JOB_FLAGS = arguments.flags
-    if arguments.input:
-        CUSTOM_INPUT = os.path.basename(arguments.input)
+    if CUSTOM_INPUT:
         job_file.write(
             f'# Custom input file requested\n'
             f'cp {arguments.input} "$job_local_dir"\n'
             f'cp {arguments.input} "$job_scratch_dir"\n'
             '\n'
-        )
-        if isinstance(JOB_FLAGS, list):
-            JOB_FLAGS.append(f"--input {CUSTOM_INPUT}")
-    
+        )  
     write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=JOB_FLAGS)
 
     # DELETE SCRATCH DIR
@@ -214,6 +209,13 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
     else:
         raise NotImplementedError(f"Software {software} is not implemented yet")
+
+JOB_FLAGS = arguments.flags
+if isinstance(arguments.flags, list) and arguments.input:
+    CUSTOM_INPUT = os.path.basename(arguments.input)
+    JOB_FLAGS.append(f"--input {CUSTOM_INPUT}")
+else:
+    CUSTOM_INPUT = False
 
 for job in arguments.jobs:
     if os.path.isfile(job):
