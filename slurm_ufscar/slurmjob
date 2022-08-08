@@ -129,11 +129,14 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
     elif software == 'gaussian':
         SOFTWARE_EXEDIR = f"\"{config['executables']['gaussian16']}\""
         SOFTWARE_SCRDIR = f'\""$job_scratch_dir"/scr\"'
-        XTBHOME=f"\"{config['executables']['xtb']}\""
+        XTBHOME = f"\"{config['executables']['xtb']}\""
+        NBO7_EXEDIR= f"\"{config['executables']['nbo7']}\""
         # GAUSSIAN16 SETTINGS
         job_file.write(
             f'export GAUSS_EXEDIR={SOFTWARE_EXEDIR}\n'
             'export PATH="$PATH":"$GAUSS_EXEDIR"\n'
+            f'export NBO7_EXEDIR={NBO7_EXEDIR}"\n'
+            'export PATH="$PATH":"$NBO7_EXEDIR"\n'
             f'export GAUSS_SCRDIR={SOFTWARE_SCRDIR}\n'
             'mkdir $GAUSS_SCRDIR\n'
             '\n'
