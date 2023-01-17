@@ -67,6 +67,7 @@ def write_submission_script(*args):
     JOB_SCRDIR = f"{config['DEFAULT']['scratch dir']}\"$USER\"/\"{QUEUE_JOB_ID}\""
 
     job_file.write(
+        "{:#^80}".format('   JOB VARIABLES   ')+'\n'
         f'job_input="{JOB_BASENAME}.{JOB_INPUT_EXTENSION}"\n'
         f'job_submit_dir="{JOB_SUBMIT_DIR}"\n'
         '\n'
@@ -81,6 +82,15 @@ def write_submission_script(*args):
         '\n'
     )
 
+    job_file.write(
+        "{:#^80}".format('   JOB INFORMATION   ')+'\n'
+        f'echo "Running job "$job_input""\n'
+        f'echo "Job local dir "$job_local_dir""\n'
+        f'echo "Job remote dir "$job_scratch_dir""\n'
+        f'echo "Job ID "{QUEUE_JOB_ID}""\n'
+        '\n'
+    )
+
     # SOFTWARE SETTINGS
     if CUSTOM_INPUT:
         job_file.write(
@@ -88,20 +98,26 @@ def write_submission_script(*args):
             f'cp {arguments.input} "$job_local_dir"\n'
             f'cp {arguments.input} "$job_scratch_dir"\n'
             '\n'
-        )  
+        )
+    job_file.write("{:#^80}".format('   SOFTWARE SPECIFIC SETTINGS   ')+'\n')  
     write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=JOB_FLAGS)
 
     # DELETE SCRATCH DIR
+    job_file.write("{:#^80}".format('   DELETE SCRATCH AND TEMP DATA   ')+'\n')
     job_file.write(
         'function clean_job() {\n'
-        '    echo "Removing jobdir from the working directory"\n'
+        '    echo "Removing JOB_SCRATCH_DIR"\n'
+        '    echo "Folder "$job_scratch_dir" will be removed"\n'
         '    rm -rf "$job_scratch_dir"\n'
-        '    echo "Done"\n'
+        '    echo "DONE"\n'
+        '    echo "Job Finished"\n'
         '}\n'
         '\n'
         'trap clean_job EXIT HUP INT TERM ERR\n'
-        '\n'
     )
+
+    job_file.write("{:#^80}".format('')+'\n')
+
     job_file.close()
 
 def write_software_specific_settings(job_file, job_scrdir, software, flags=None):
