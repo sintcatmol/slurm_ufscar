@@ -88,6 +88,7 @@ def write_submission_script(*args):
         f'echo "Job local dir "$job_local_dir""\n'
         f'echo "Job remote dir "$job_scratch_dir""\n'
         f'echo "Job ID "{QUEUE_JOB_ID}""\n'
+        f'echo ""'
         '\n'
     )
 
@@ -106,10 +107,11 @@ def write_submission_script(*args):
     job_file.write("{:#^80}".format('   DELETE SCRATCH AND TEMP DATA   ')+'\n')
     job_file.write(
         'function clean_job() {\n'
+        '    echo "Job ended"\n'
         '    echo "Removing JOB_SCRATCH_DIR"\n'
-        '    echo "Folder "$job_scratch_dir" will be removed"\n'
+        '    echo "Folder "$job_scratch_dir" will be deleted"\n'
         '    rm -rf "$job_scratch_dir"\n'
-        '    echo "DONE"\n'
+        '    echo "Folder "$job_scratch_dir" deleted"\n'
         '    echo "Job Finished"\n'
         '}\n'
         '\n'
