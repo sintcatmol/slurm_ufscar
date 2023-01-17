@@ -88,7 +88,7 @@ def write_submission_script(*args):
         f'echo "Job local dir "$job_local_dir""\n'
         f'echo "Job remote dir "$job_scratch_dir""\n'
         f'echo "Job ID "{QUEUE_JOB_ID}""\n'
-        f'echo ""'
+        f'echo ""\n'
         '\n'
     )
 
