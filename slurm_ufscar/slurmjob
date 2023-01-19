@@ -69,14 +69,19 @@ def write_submission_script(*args):
     job_file.write("{:#^80}".format('   DELETE SCRATCH AND TEMP DATA   ')+'\n')
     job_file.write(
         'function clean_job() {\n'
-        '  echo "Job ended"\n'
-        '  echo "Copying outputs to local_dir"\n'
-        '  cp -v "$job_scratch_dir"/* "$job_local_dir"/\n'
-        '  echo "Removing scratch dir"\n'
-        '  echo "Folder "$job_scratch_dir" will be deleted"\n'
-        '  rm -rf "$job_scratch_dir"\n'
-        '  echo "Folder "$job_scratch_dir" deleted"\n'
-        '  echo "Job Finished"\n'
+        '  echo "Received SIG"\n'
+        '  if [[ -d "$job_scratch_dir" ]]; then\n'
+        '    echo "Copying outputs to local_dir"\n'
+        '    cp -v "$job_scratch_dir"/* "$job_local_dir"/\n'
+        '    echo "Removing scratch dir"\n'
+        '    rm -vrf "$job_scratch_dir"\n'
+        '    echo "Job done"\n'
+        '    echo ""\n'
+        '  else\n'
+        '    echo "scratch dir does not exist"\n'
+        '    echo ""\n'
+        '  fi\n'
+        '  exit\n'
         '}\n'
         'trap clean_job EXIT HUP INT TERM ERR\n'
         '\n'
@@ -173,6 +178,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         job_file.write(
             f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.log &\n'
             'wait\n'
+            'exit \n'
             '\n'
         )   
     elif software == 'xtb':
