@@ -31,10 +31,8 @@ m = (totsec%3600) // 60
 sec =(totsec%3600)%60 #just for reference
 walltime = f"{int(h):02d}:{int(m):02d}:{int(sec):02d}"
 
-SLURM_OUTPUT_FILE = 'slurm_"$SLURM_JOB_ID".log'
-
 def write_submission_script(*args):
-    job_file = open(f"slurmjob_{JOB_BASENAME}.sh", mode='w')
+    job_file = open(f"job_{JOB_BASENAME}.sh", mode='w')
     job_file.write('#!/bin/bash\n')
 
     # QUEUE SYSTEM SETTINGS
@@ -42,7 +40,7 @@ def write_submission_script(*args):
         QUEUE_JOB_ID = "$SLURM_JOB_ID"
         job_file.write(
             f'#SBATCH --job-name={JOB_BASENAME}\n'
-            f'#SBATCH --output=slurm_%A_%x.log\n'
+            f'#SBATCH --output=slurm_%x_%A.log\n'
             '#SBATCH --nodes=1\n'
             f'#SBATCH --ntasks={arguments.cores}\n'
             '#SBATCH --cpus-per-task=1\n'
