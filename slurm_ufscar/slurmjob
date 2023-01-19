@@ -77,7 +77,7 @@ def write_submission_script(*args):
         f'job_scratch_dir="{JOB_SCRDIR}"\n'
         'mkdir -p $job_scratch_dir\n'
         '\n'
-        f'cp "$job_submit_dir"/"$job_input" "$job_local_dir"\n'
+        #f'cp "$job_submit_dir"/"$job_input" "$job_local_dir"\n'
         f'cp "$job_submit_dir"/"$job_input" "$job_scratch_dir"\n'
         '\n'
     )
@@ -96,7 +96,7 @@ def write_submission_script(*args):
     if CUSTOM_INPUT:
         job_file.write(
             f'# Custom input file requested\n'
-            f'cp {arguments.input} "$job_local_dir"\n'
+            #f'cp {arguments.input} "$job_local_dir"\n'
             f'cp {arguments.input} "$job_scratch_dir"\n'
             '\n'
         )
@@ -116,6 +116,7 @@ def write_submission_script(*args):
         '}\n'
         '\n'
         'trap clean_job EXIT HUP INT TERM ERR\n'
+        '\n'
     )
 
     job_file.write("{:#^80}".format('')+'\n')
@@ -137,7 +138,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # RUN JOB
         job_file.write(
-            f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_local_dir"/{JOB_BASENAME}.out\n'
+            f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.out\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -175,7 +176,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # RUN JOB
         job_file.write(
-            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > "$job_local_dir"/{JOB_BASENAME}.log\n'
+            f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.log\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -197,7 +198,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_local_dir"/xtb.output\n'
+            f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/xtb.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
@@ -221,7 +222,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         #RUN JOB
         job_file.write(
             f'cd $job_scratch_dir\n'
-            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_local_dir"/crest.output\n'
+            f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/crest.output\n'
             '\n'
         )
         # COPY OUTPUTS FROM SCR TO LOCAL
