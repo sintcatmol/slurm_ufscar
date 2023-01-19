@@ -100,6 +100,7 @@ def write_submission_script(*args):
         '\n'
         #f'cp "$job_submit_dir"/"$job_input" "$job_local_dir"\n'
         f'cp "$job_submit_dir"/"$job_input" "$job_scratch_dir"\n'
+        f'cd $job_scratch_dir\n'
         '\n'
     )
 
@@ -194,7 +195,6 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         #RUN JOB
         job_file.write(
-            f'cd $job_scratch_dir\n'
             f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/xtb.output\n'
             '\n'
         )
@@ -213,7 +213,6 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         #RUN JOB
         job_file.write(
-            f'cd $job_scratch_dir\n'
             f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/crest.output\n'
             '\n'
         )
