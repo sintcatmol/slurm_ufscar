@@ -69,18 +69,19 @@ def write_submission_script(*args):
     job_file.write("{:#^80}".format('   DELETE SCRATCH AND TEMP DATA   ')+'\n')
     job_file.write(
         'function clean_job() {\n'
-        '    echo "Job ended"\n'
-        '    echo "Removing JOB_SCRATCH_DIR"\n'
-        '    echo "Folder "$job_scratch_dir" will be deleted"\n'
-        '    rm -rf "$job_scratch_dir"\n'
-        '    echo "Folder "$job_scratch_dir" deleted"\n'
-        '    echo "Job Finished"\n'
+        '  echo "Job ended"\n'
+        '  echo "Copying outputs to local_dir"\n'
+        '  cp -v "$job_scratch_dir"/* "$job_local_dir"/\n'
+        '  echo "Removing scratch dir"\n'
+        '  echo "Folder "$job_scratch_dir" will be deleted"\n'
+        '  rm -rf "$job_scratch_dir"\n'
+        '  echo "Folder "$job_scratch_dir" deleted"\n'
+        '  echo "Job Finished"\n'
         '}\n'
-        '\n'
         'trap clean_job EXIT HUP INT TERM ERR\n'
         '\n'
     )
-    
+
     job_file.write(
         "{:#^80}".format('   JOB VARIABLES   ')+'\n'
         f'job_input="{JOB_BASENAME}.{JOB_INPUT_EXTENSION}"\n'
@@ -140,11 +141,6 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
             f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.out\n'
             '\n'
         )
-        # COPY OUTPUTS FROM SCR TO LOCAL
-        job_file.write(
-            'cp "$job_scratch_dir"/* "$job_local_dir"/\n'
-            '\n'
-        )
     elif software == 'gaussian':
         SOFTWARE_EXEDIR = f"\"{config['executables']['gaussian16']}\""
         SOFTWARE_SCRDIR = f'\""$job_scratch_dir"/scr\"'
@@ -177,12 +173,7 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         job_file.write(
             f'"$GAUSS_EXEDIR"/g16 < "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.log\n'
             '\n'
-        )
-        # COPY OUTPUTS FROM SCR TO LOCAL
-        job_file.write(
-            'cp "$job_scratch_dir"/* "$job_local_dir"/\n'
-            '\n'
-        )     
+        )   
     elif software == 'xtb':
         SOFTWARE_EXEDIR = f"\"{config['executables']['xtb']}\""
         SOFTWARE_SCRDIR = f"{job_scrdir}/scr"
@@ -198,11 +189,6 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         job_file.write(
             f'cd $job_scratch_dir\n'
             f'"$XTBHOME"/bin/xtb "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/xtb.output\n'
-            '\n'
-        )
-        # COPY OUTPUTS FROM SCR TO LOCAL
-        job_file.write(
-            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
             '\n'
         )
     elif software == 'crest':
@@ -222,11 +208,6 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         job_file.write(
             f'cd $job_scratch_dir\n'
             f'"$CREST_EXEDIR"/crest "$job_scratch_dir"/"$job_input" {" ".join(flags)} &> "$job_scratch_dir"/crest.output\n'
-            '\n'
-        )
-        # COPY OUTPUTS FROM SCR TO LOCAL
-        job_file.write(
-            'mv "$job_scratch_dir"/* "$job_local_dir"/\n'
             '\n'
         )
     else:
