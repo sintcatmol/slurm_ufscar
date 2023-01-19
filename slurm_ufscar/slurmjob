@@ -46,6 +46,7 @@ def write_submission_script(*args):
             '#SBATCH --cpus-per-task=1\n'
             f'#SBATCH --mem-per-cpu={arguments.mem}\n'
             f'#SBATCH --time={walltime}\n'
+            f'#SBATCH --signal=B:TERM@01:00\n'
             '\n'
         )
     elif config['DEFAULT']['queue engine'] == 'PBS-Pro':
