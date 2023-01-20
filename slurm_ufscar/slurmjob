@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-software", "-s", choices=['xtb','crest','gaussian','orca'], required=True)
 parser.add_argument("-jobs", "-j", nargs='+', required=True, help='Input file for the requested program')
 parser.add_argument("--input", required=False, help="Custom input file. Usually employed for XTB calculations")
+parser.add_argument("--send-files", nargs='+', required=False, help="Send files from local dir to scratch dir")
 parser.add_argument("-cores", "-c", type=int, required=True, help='Number of cores')
 parser.add_argument("-mem", "-m", type=int, required=True, help='Memory in MB per core required')
 parser.add_argument("-time", "-t", type=float, required=True, help='Maximum running time in hours')
@@ -87,8 +88,9 @@ def write_submission_script(*args):
         '\n'
     )
 
+    # JOB VARS
+    job_file.write("{:#^80}".format('   JOB VARIABLES   ')+'\n')
     job_file.write(
-        "{:#^80}".format('   JOB VARIABLES   ')+'\n'
         f'job_input="{JOB_BASENAME}.{JOB_INPUT_EXTENSION}"\n'
         f'job_submit_dir="{JOB_SUBMIT_DIR}"\n'
         '\n'
@@ -98,11 +100,29 @@ def write_submission_script(*args):
         f'job_scratch_dir="{JOB_SCRDIR}"\n'
         'mkdir -p $job_scratch_dir\n'
         '\n'
+    )
+    job_file.write(   
         #f'cp "$job_submit_dir"/"$job_input" "$job_local_dir"\n'
         f'cp "$job_submit_dir"/"$job_input" "$job_scratch_dir"\n'
-        f'cd $job_scratch_dir\n'
         '\n'
     )
+    # Custom inputs and external files
+    if CUSTOM_INPUT:
+        job_file.write(
+            f'# REQUESTED: send custom input file to SCR_DIR\n'
+            f'cp "$job_submit_dir"/{arguments.input} "$job_scratch_dir"\n'
+            '\n'
+        )
+    if arguments.send_files:
+        job_file.write(f'# REQUESTED: send additional files to SCR_DIR\n')
+        for file in arguments.send_files:
+            job_file.write(
+                f'cp "$job_submit_dir"/{file} "$job_scratch_dir"\n'
+            )
+        job_file.write('\n')
+    
+    job_file.write(f'cd $job_scratch_dir\n')    
+    job_file.write('\n')
 
     job_file.write(
         "{:#^80}".format('   JOB INFORMATION   ')+'\n'
@@ -113,15 +133,8 @@ def write_submission_script(*args):
         f'echo ""\n'
         '\n'
     )
-
+    
     # SOFTWARE SETTINGS
-    if CUSTOM_INPUT:
-        job_file.write(
-            f'# Custom input file requested\n'
-            #f'cp {arguments.input} "$job_local_dir"\n'
-            f'cp {arguments.input} "$job_scratch_dir"\n'
-            '\n'
-        )
     job_file.write("{:#^80}".format('   SOFTWARE SPECIFIC SETTINGS   ')+'\n')  
     write_software_specific_settings(job_file, JOB_SCRDIR, arguments.software, flags=JOB_FLAGS)
 
