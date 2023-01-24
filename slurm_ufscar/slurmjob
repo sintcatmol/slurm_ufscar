@@ -73,7 +73,7 @@ def write_submission_script(*args):
         '  echo "Received SIG"\n'
         '  if [[ -d "$job_scratch_dir" ]]; then\n'
         '    echo "Copying outputs to local_dir"\n'
-        '    cp -v "$job_scratch_dir"/* "$job_local_dir"/\n'
+        '    cp -rv "$job_scratch_dir"/* "$job_local_dir"/\n'
         '    echo "Removing scratch dir"\n'
         '    rm -vrf "$job_scratch_dir"\n'
         '    echo "Job done"\n'
