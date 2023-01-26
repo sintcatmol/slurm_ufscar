@@ -157,7 +157,9 @@ def write_software_specific_settings(job_file, job_scrdir, software, flags=None)
         )
         # RUN JOB
         job_file.write(
-            f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.out\n'
+            f'"$ORCA_EXEDIR"/orca "$job_scratch_dir"/"$job_input" > "$job_scratch_dir"/{JOB_BASENAME}.out\n' &
+            f'wait\n'
+            f'exit\n'
             '\n'
         )
     elif software == 'gaussian':
